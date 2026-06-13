@@ -1,0 +1,10 @@
+User-agent: *
+Allow: /
+Disallow: /admin
+Disallow: /api
+
+# Sitemaps
+Sitemap: https://fifa-ticket-hub.manus.space/sitemap.xml
+
+# Crawl delay
+Crawl-delay: 1

@@ -1,0 +1,111 @@
+# FIFA Ticket Hub Project Analysis
+
+Welcome! This report provides a detailed breakdown of the **FIFA Ticket Hub** codebase, its architecture, database design, user flow, and configuration.
+
+---
+
+## 🏗️ 1. Project Overview & Architecture
+
+The **FIFA Ticket Hub** is a multi-role web application designed for browsing, inquiring about, and managing ticket packages for the FIFA World Cup 2026. 
+
+```mermaid
+graph TD
+    Client[React Frontend - client/] -->|tRPC Queries & Mutations| Express[Express Server - server/]
+    Express -->|Read/Write| Postgres[(PostgreSQL Database)]
+    Express -->|Fallback| Memory[(In-Memory Data Fallback)]
+    Client -->|Direct API| EmailJS[EmailJS API - Ticket Verification]
+    Client -->|Direct Link| WhatsApp[WhatsApp Web/App - Direct Messaging]
+```
+
+### Key Architectural Traits
+* **tRPC Stack**: Type-safe end-to-end communication between the React frontend and Express backend without boilerplate REST endpoints.
+* **Database Fallback Pattern**: The backend database helper ([server/db.ts](file:///c:/Users/USER/Desktop/School/fifa/server/db.ts)) is written defensively. If PostgreSQL is down or unconfigured (`DATABASE_URL` is empty), the application falls back to local in-memory mock data for matches and ticket packages, allowing development to proceed offline.
+* **Modern CSS**: Built with the brand new **Tailwind CSS v4** (utilizing `@tailwindcss/vite` plugin and `@theme` configuration directives inside [client/src/index.css](file:///c:/Users/USER/Desktop/School/fifa/client/src/index.css)).
+
+---
+
+## 🗄️ 2. Database Schema
+
+The database design relies on four principal tables defined in [POSTGRES_SETUP.sql](file:///c:/Users/USER/Desktop/School/fifa/POSTGRES_SETUP.sql):
+
+### 1. `users` Table
+Stores user metadata and authorization roles.
+* `id` (serial, PK)
+* `openId` (varchar, Unique) — Login identifier (e.g. `local:email@example.com`)
+* `name` / `email` / `loginMethod`
+* `role` (varchar, default `'user'`) — Restricted to `'admin'` or `'user'`
+* `lastSignedIn` / `createdAt` / `updatedAt`
+
+### 2. `matches` Table
+Fixture list with location details and global availability status.
+* `id` (serial, PK)
+* `matchNumber` (integer)
+* `team1` / `team2` (varchar) & codes (`team1Code`, `team2Code`)
+* `stadium` / `city` / `country`
+* `matchDate` (timestamp)
+* `stage` (`match_stage` Enum: `'group'`, `'round_of_16'`, `'quarter_final'`, `'semi_final'`, `'final'`)
+* `group` (varchar, nullable)
+* `availability` (`match_availability` Enum: `'available'`, `'limited'`, `'sold_out'`)
+
+### 3. `ticketPackages` Table
+Available tier packages for a specific match.
+* `id` (serial, PK)
+* `matchId` (integer, FK referencing matches)
+* `category` (`ticket_category` Enum: `'Category 1'`, `'Category 2'`, `'Category 3'`, `'Category 4'`)
+* `price` (numeric(10,2))
+* `quantity` (integer)
+* `quantitySold` (integer, default `0`)
+* `benefits` (text)
+* `seatType` (varchar)
+
+### 4. `customerInquiries` Table
+Submissions from users interested in booking tickets.
+* `id` (serial, PK)
+* `name` / `email` / `phone`
+* `matchId` (integer, nullable)
+* `ticketCategoryId` (integer, nullable)
+* `message` (text)
+* `status` (`inquiry_status` Enum: `'new'`, `'contacted'`, `'resolved'`)
+
+---
+
+## 🧭 3. Routing & Pages
+
+Routing is managed via `wouter` in [client/src/App.tsx](file:///c:/Users/USER/Desktop/School/fifa/client/src/App.tsx).
+
+### Public/Authenticated User Pages
+1. **Landing Page (`/`)**: Displays introductory tournament sections and featured match highlight carousels.
+2. **Browse Matches (`/matches`)**: Filtering options for search queries, tournament stages, and specific match groups.
+3. **Match Details (`/matches/:id`)**: Shows information on teams, stadium locations, match times, and lists available ticket categories (Category 1 to 4).
+4. **Ticket Packages (`/packages`)**: Compares categories, details benefits, and provides WhatsApp booking links.
+5. **Verify Ticket (`/verify-ticket`)**: Allows users to check ticket authenticity. Once verified, it sends an email confirmation using EmailJS.
+6. **FAQ & About (`/faq`, `/about`)**: Information and FAQs.
+7. **Contact (`/contact`)**: Submit ticket inquiry forms.
+
+### Protected Admin Pages
+* **Admin Dashboard (`/admin`)**: A dashboard interface that allows administrators to:
+  * Add, edit, or delete matches.
+  * Define and manage ticket packages (pricing, quantity, benefits).
+  * Review and change the status of customer inquiries (`new` ➡️ `contacted` ➡️ `resolved`).
+
+---
+
+## 🔌 4. Integrated Third-Party Services
+
+1. **EmailJS (`@emailjs/browser`)**: Configured on the client-side to directly dispatch verification confirmation emails to customers who verify their tickets.
+2. **WhatsApp Links**: Provides quick-action links `https://wa.me/{number}?text={message}` (with configurable phone numbers and prefilled text queries) to bridge buyers to agents for transactional finalization.
+3. **AWS S3 / Forge Storage**: Handled in [server/storage.ts](file:///c:/Users/USER/Desktop/School/fifa/server/storage.ts) for uploading match graphics or related attachments to S3 via presigned PUT requests.
+4. **Google Maps Proxy**: Handled in [client/src/components/Map.tsx](file:///c:/Users/USER/Desktop/School/fifa/client/src/components/Map.tsx) for displaying map coordinates of stadium venues.
+
+---
+
+## 🧪 5. Testing & Known Discrepancies
+
+Running the tests with `npm run test` reveals **5 failing tests** in [server/matches.test.ts](file:///c:/Users/USER/Desktop/School/fifa/server/matches.test.ts):
+
+1. **HTTP Status Code Mismatches (tRPC Access Control)**:
+   * **Issue**: The tests expect a code of `UNAUTHORIZED` when guests try to modify matches, packages, or list inquiries.
+   * **Root Cause**: The backend uses the `requireAdmin` middleware inside [server/_core/trpc.ts](file:///c:/Users/USER/Desktop/School/fifa/server/_core/trpc.ts) which throws `FORBIDDEN` instead.
+2. **Database Failures in Inquiries API**:
+   * **Issue**: Public inquiry creation fails with `Database not available`.
+   * **Root Cause**: Unlike matches and packages, the inquiry creation method in `db.ts` throws an error if PostgreSQL is offline and does not implement a local in-memory fallback.

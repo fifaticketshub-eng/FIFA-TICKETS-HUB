@@ -1,0 +1,246 @@
+@import "tailwindcss";
+
+@theme {
+  /* FIFA-inspired color palette */
+  --color-fifa-navy: #0a1f3f;
+  --color-fifa-gold: #d4af37;
+  --color-fifa-white: #ffffff;
+  --color-fifa-black: #1a1a1a;
+  --color-fifa-light-blue: #1e3a8a;
+  
+  /* Semantic colors for light mode */
+  --color-background: #ffffff;
+  --color-foreground: #0a1f3f;
+  --color-card: #f8f9fa;
+  --color-card-foreground: #0a1f3f;
+  --color-primary: #0a1f3f;
+  --color-primary-foreground: #ffffff;
+  --color-secondary: #d4af37;
+  --color-secondary-foreground: #0a1f3f;
+  --color-accent: #d4af37;
+  --color-accent-foreground: #0a1f3f;
+  --color-muted: #e5e7eb;
+  --color-muted-foreground: #6b7280;
+  --color-border: #e5e7eb;
+  --color-input: #f3f4f6;
+  --color-ring: #d4af37;
+  
+  /* Dark mode colors */
+  --color-dark-background: #0a1f3f;
+  --color-dark-foreground: #ffffff;
+  --color-dark-card: #1a2f4f;
+  --color-dark-card-foreground: #ffffff;
+  --color-dark-border: #2a3f5f;
+  --color-dark-input: #1a2f4f;
+  --color-dark-muted: #4b5563;
+  --color-dark-muted-foreground: #d1d5db;
+  
+  /* Typography */
+  --font-sans: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif;
+  --font-serif: ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
+  --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Consolas, "Liberation Mono", Menlo, monospace;
+  
+  /* Spacing scale */
+  --spacing-xs: 0.25rem;
+  --spacing-sm: 0.5rem;
+  --spacing-md: 1rem;
+  --spacing-lg: 1.5rem;
+  --spacing-xl: 2rem;
+  --spacing-2xl: 3rem;
+  --spacing-3xl: 4rem;
+  
+  /* Border radius */
+  --radius-sm: 0.375rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 0.75rem;
+  --radius-xl: 1rem;
+  --radius-2xl: 1.5rem;
+  
+  /* Shadows */
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1);
+  --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1);
+  --shadow-2xl: 0 25px 50px -12px rgb(0 0 0 / 0.25);
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-feature-settings: "rounding" 1;
+  }
+
+  h1 {
+    @apply text-4xl font-bold tracking-tight;
+  }
+
+  h2 {
+    @apply text-3xl font-bold tracking-tight;
+  }
+
+  h3 {
+    @apply text-2xl font-semibold tracking-tight;
+  }
+
+  h4 {
+    @apply text-xl font-semibold;
+  }
+
+  h5 {
+    @apply text-lg font-semibold;
+  }
+
+  h6 {
+    @apply text-base font-semibold;
+  }
+
+  p {
+    @apply text-base leading-relaxed;
+  }
+
+  a {
+    @apply text-primary hover:underline;
+  }
+
+  button {
+    @apply transition-all duration-200;
+  }
+}
+
+@layer components {
+  .container {
+    @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
+  }
+
+  .btn-primary {
+    @apply bg-fifa-navy text-white px-6 py-3 rounded-lg font-semibold transition-all duration-200;
+  }
+
+  .btn-secondary {
+    @apply bg-fifa-gold text-fifa-navy px-6 py-3 rounded-lg font-semibold transition-all duration-200;
+  }
+
+  .btn-outline {
+    @apply border-2 border-fifa-navy text-fifa-navy px-6 py-3 rounded-lg font-semibold hover:bg-fifa-navy hover:text-white transition-all duration-200;
+  }
+
+  .card-elevated {
+    @apply bg-card text-card-foreground rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300;
+  }
+
+  .section-padding {
+    @apply py-16 sm:py-20 lg:py-24;
+  }
+
+  .flex {
+    @apply flex min-w-0 min-h-0;
+  }
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+
+  .transition-ease-out {
+    @apply transition-all duration-300 ease-out;
+  }
+
+  .transition-ease-in-out {
+    @apply transition-all duration-300 ease-in-out;
+  }
+
+  .gradient-fifa {
+    @apply bg-gradient-to-br from-fifa-navy via-fifa-light-blue to-fifa-navy;
+  }
+
+  .gradient-gold {
+    @apply bg-gradient-to-r from-fifa-gold to-yellow-500;
+  }
+}
+
+/* Dark mode styles driven by ThemeContext's .dark class */
+:root.dark {
+  --color-background: #0a1f3f;
+  --color-foreground: #ffffff;
+  --color-card: #1a2f4f;
+  --color-card-foreground: #ffffff;
+  --color-primary: #ffffff;
+  --color-primary-foreground: #0a1f3f;
+  --color-muted: #4b5563;
+  --color-muted-foreground: #d1d5db;
+  --color-border: #2a3f5f;
+  --color-input: #1a2f4f;
+  color-scheme: dark;
+}
+
+:root:not(.dark) {
+  color-scheme: light;
+}
+
+:root.dark body {
+  @apply bg-fifa-navy text-white;
+}
+
+/* Smooth animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideInDown {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.5s ease-out;
+}
+
+.animate-slide-in-up {
+  animation: slideInUp 0.6s ease-out;
+}
+
+.animate-slide-in-down {
+  animation: slideInDown 0.6s ease-out;
+}
+
+.animate-scale-in {
+  animation: scaleIn 0.4s ease-out;
+}
