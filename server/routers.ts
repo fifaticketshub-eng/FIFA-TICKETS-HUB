@@ -6,10 +6,41 @@ import { systemRouter } from "./_core/systemRouter";
 import { adminProcedure, publicProcedure, router } from "./_core/trpc";
 import { z } from "zod";
 import * as db from "./db";
+import { invokeLLM } from "./_core/llm";
 
 export const appRouter = router({
   system: systemRouter,
   
+  ai: router({
+    chat: publicProcedure
+      .input(z.object({
+        messages: z.array(z.object({
+          role: z.enum(["system", "user", "assistant"]),
+          content: z.string(),
+        })),
+      }))
+      .mutation(async ({ input }) => {
+        try {
+          const response = await invokeLLM({
+            messages: input.messages as any,
+          });
+          
+          const content = response.choices[0].message.content;
+          return typeof content === "string" 
+            ? content 
+            : Array.isArray(content) 
+              ? content.map(c => ("text" in c ? c.text : "")).join("")
+              : "";
+        } catch (error) {
+          console.error("[AI Router Error]", error);
+          throw new TRPCError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: "Failed to generate AI response",
+          });
+        }
+      }),
+  }),
+
   auth: router({
     me: publicProcedure.query(opts => opts.ctx.user),
     localAccess: publicProcedure

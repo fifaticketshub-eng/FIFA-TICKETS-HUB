@@ -1,0 +1,29 @@
+services:
+  - type: web
+    name: fifa-ticket-hub
+    env: node
+    plan: free
+    buildCommand: npm install && npm run build
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL
+        sync: false
+      - key: JWT_SECRET
+        generateValue: true
+      - key: OWNER_OPEN_ID
+        sync: false
+        placeholder: "local:your-email@example.com"
+      - key: VITE_EMAILJS_SERVICE_ID
+        sync: false
+      - key: VITE_EMAILJS_TEMPLATE_ID
+        sync: false
+      - key: VITE_EMAILJS_PUBLIC_KEY
+        sync: false
+      - key: VITE_WHATSAPP_NUMBER
+        sync: false
+        placeholder: "e.g. 1234567890"
+      - key: BUILT_IN_FORGE_API_KEY
+        sync: false
+        placeholder: "Only needed for AI Assistant"

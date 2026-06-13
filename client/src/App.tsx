@@ -85,7 +85,7 @@ function App() {
               <Navigation />
               <Router />
               <WhatsAppButton 
-                phoneNumber="1234567890"
+                phoneNumber={import.meta.env.VITE_WHATSAPP_NUMBER || "1234567890"}
                 message="Hello! I'm interested in FIFA World Cup tickets. Could you please provide availability and pricing information?"
               />
             </>
