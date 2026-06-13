@@ -23,7 +23,7 @@ services:
         sync: false
       - key: VITE_WHATSAPP_NUMBER
         sync: false
-        placeholder: "e.g. 1234567890"
+        placeholder: "e.g. 237653749842"
       - key: BUILT_IN_FORGE_API_KEY
         sync: false
         placeholder: "Only needed for AI Assistant"

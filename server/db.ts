@@ -136,12 +136,19 @@ function sortLocalMatches() {
 
 async function query<T extends QueryResultRow>(sql: string, values: unknown[] = []) {
   const db = getPool();
-  if (!db) return null;
+  if (!db) {
+    console.error("[Database] Query failed: Connection pool not initialized. Check if DATABASE_URL is set.");
+    return null;
+  }
 
   try {
     return await db.query<T>(sql, values);
   } catch (error) {
-    console.warn("[Database] Query failed:", error);
+    console.error("[Database] Query execution error:", {
+      message: (error as Error).message,
+      sql: sql.substring(0, 100) + "...",
+      stack: (error as Error).stack,
+    });
     return null;
   }
 }
