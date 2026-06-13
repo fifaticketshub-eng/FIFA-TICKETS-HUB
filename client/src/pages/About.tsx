@@ -32,8 +32,8 @@ export default function About() {
                 Whether you're a casual fan or a dedicated supporter, we have the perfect ticket option for you.
               </p>
             </div>
-            <Card className="p-8 bg-gradient-fifa text-white">
-              <h3 className="text-2xl font-bold mb-6">Our Commitment</h3>
+            <Card className="p-8 bg-fifa-navy bg-gradient-fifa text-white border-none">
+              <h3 className="text-2xl font-bold mb-6 text-white">Our Commitment</h3>
               <ul className="space-y-4">
                 <li className="flex items-start gap-3">
                   <CheckCircle className="w-6 h-6 flex-shrink-0 mt-1" />

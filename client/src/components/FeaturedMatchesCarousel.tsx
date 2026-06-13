@@ -99,9 +99,8 @@ export default function FeaturedMatchesCarousel({ matches, isLoading }: Featured
         <div className="flex items-center justify-between mt-8">
           <Button
             onClick={goToPrevious}
-            variant="outline"
             size="icon"
-            className="rounded-full w-12 h-12 border-fifa-navy text-fifa-navy hover:bg-fifa-navy hover:text-white"
+            className="rounded-full w-12 h-12 bg-fifa-navy text-white hover:opacity-90 shadow-md"
           >
             <ChevronLeft className="w-6 h-6" />
           </Button>
@@ -122,9 +121,8 @@ export default function FeaturedMatchesCarousel({ matches, isLoading }: Featured
 
           <Button
             onClick={goToNext}
-            variant="outline"
             size="icon"
-            className="rounded-full w-12 h-12 border-fifa-navy text-fifa-navy hover:bg-fifa-navy hover:text-white"
+            className="rounded-full w-12 h-12 bg-fifa-navy text-white hover:opacity-90 shadow-md"
           >
             <ChevronRight className="w-6 h-6" />
           </Button>

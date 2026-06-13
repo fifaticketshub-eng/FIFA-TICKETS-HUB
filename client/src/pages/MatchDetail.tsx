@@ -102,7 +102,7 @@ export default function MatchDetail() {
       : `Hello! I'm interested in ${match.team1} vs ${match.team2} tickets at ${match.stadium} on ${format(new Date(match.matchDate), 'MMM dd, yyyy')}. Could you please provide availability and pricing information?`;
     
     const encodedMessage = encodeURIComponent(message);
-    const whatsappUrl = `https://wa.me/1234567890?text=${encodedMessage}`;
+    const whatsappUrl = `https://wa.me/237653749842?text=${encodedMessage}`;
     window.open(whatsappUrl, '_blank');
   };
 

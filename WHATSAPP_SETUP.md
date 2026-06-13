@@ -41,12 +41,12 @@ Find:
 
 ```tsx
 <WhatsAppButton 
-  phoneNumber="1234567890"
+  phoneNumber="237653749842"
   message="Hello! I'm interested in FIFA World Cup tickets. Could you please provide availability and pricing information?"
 />
 ```
 
-Replace `1234567890` with your real WhatsApp number.
+Replace `237653749842` with your real WhatsApp number.
 
 Example:
 
@@ -62,13 +62,13 @@ Example:
 Some pages also open WhatsApp directly with:
 
 ```tsx
-https://wa.me/1234567890
+https://wa.me/237653749842
 ```
 
 Search the project for:
 
 ```text
-1234567890
+237653749842
 ```
 
 Replace every occurrence with your real number.

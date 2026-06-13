@@ -163,7 +163,7 @@ describe('Inquiries API', () => {
     const result = await caller.inquiries.create({
       name: 'Test User',
       email: 'test@example.com',
-      phone: '+1234567890',
+      phone: '+237653749842',
       message: 'I am interested in tickets',
     });
 
@@ -200,7 +200,7 @@ describe('Inquiries API', () => {
     await publicCaller.inquiries.create({
       name: 'Test User',
       email: 'test@example.com',
-      phone: '+1234567890',
+      phone: '+237653749842',
       message: 'I am interested in tickets',
     });
 

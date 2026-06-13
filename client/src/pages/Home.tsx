@@ -46,6 +46,10 @@
                     </Button>
                   </Link>
                   <Button
+                    onClick={() => {
+                      const message = encodeURIComponent('Hello! I\'m interested in FIFA World Cup tickets.');
+                      window.open(`https://wa.me/237653749842?text=${message}`, '_blank');
+                    }}
                     variant="outline"
                     className="w-full sm:w-auto border-2 border-white bg-white/10 text-white hover:bg-white hover:text-fifa-navy hover:border-white px-8 py-6 text-lg font-semibold shadow-lg"
                   >
@@ -83,7 +87,7 @@
             {featuredMatches && featuredMatches.length > 0 && (
               <div className="mt-12 text-center">
                 <Link href="/matches">
-                  <Button variant="outline" className="border-fifa-navy text-fifa-navy hover:bg-fifa-navy hover:text-white px-8 py-6 text-lg">
+                  <Button className="bg-fifa-navy text-white hover:opacity-90 px-8 py-6 text-lg shadow-md">
                     View All Matches
                     <ChevronRight className="ml-2 w-5 h-5" />
                   </Button>
@@ -188,7 +192,13 @@
               <p className="w-full text-lg sm:text-xl leading-8 text-gray-100 drop-shadow-[0_2px_10px_rgba(0,0,0,0.55)]">
                 Don't miss out on the world's greatest football tournament. Contact us today to reserve your tickets.
               </p>
-              <Button className="w-full sm:w-auto bg-fifa-gold text-fifa-navy hover:bg-yellow-400 hover:text-fifa-navy px-8 py-6 text-lg font-semibold shadow-lg">
+              <Button 
+                onClick={() => {
+                  const message = encodeURIComponent('Hello! I\'m ready to secure my FIFA World Cup tickets. Can you help me?');
+                  window.open(`https://wa.me/237653749842?text=${message}`, '_blank');
+                }}
+                className="w-full sm:w-auto bg-fifa-gold text-fifa-navy hover:bg-yellow-400 hover:text-fifa-navy px-8 py-6 text-lg font-semibold shadow-lg"
+              >
                 Get Started Now
               </Button>
             </div>

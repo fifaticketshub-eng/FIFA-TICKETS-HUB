@@ -109,7 +109,13 @@ export default function FAQ() {
           <p className="text-lg text-muted-foreground leading-8 mb-8">
             Our team is here to help! Contact us directly via WhatsApp for personalized assistance.
           </p>
-          <Button className="bg-fifa-navy text-white hover:opacity-90 px-8 py-6 text-lg font-semibold inline-flex items-center gap-2">
+          <Button 
+            onClick={() => {
+              const message = encodeURIComponent('Hello! I have some questions about FIFA World Cup tickets.');
+              window.open(`https://wa.me/237653749842?text=${message}`, '_blank');
+            }}
+            className="bg-fifa-navy text-white hover:opacity-90 px-8 py-6 text-lg font-semibold inline-flex items-center gap-2"
+          >
             <MessageCircle className="w-5 h-5" />
             Chat With Us on WhatsApp
           </Button>

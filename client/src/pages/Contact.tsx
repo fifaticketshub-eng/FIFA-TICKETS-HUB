@@ -87,7 +87,7 @@ export default function Contact() {
                 className="w-full bg-green-500 hover:bg-green-600 text-white"
                 onClick={() => {
                   const message = encodeURIComponent('Hello! I\'m interested in FIFA World Cup tickets.');
-                  window.open(`https://wa.me/1234567890?text=${message}`, '_blank');
+                  window.open(`https://wa.me/237653749842?text=${message}`, '_blank');
                 }}
               >
                 Chat on WhatsApp
@@ -111,8 +111,8 @@ export default function Contact() {
               <p className="text-muted-foreground leading-7 mb-6">
                 Call us during business hours for immediate assistance.
               </p>
-              <a href="tel:+1234567890" className="font-semibold text-fifa-navy hover:underline dark:text-fifa-gold">
-                +1 (234) 567-890
+              <a href="tel:+237653749842" className="font-semibold text-fifa-navy hover:underline dark:text-fifa-gold">
+                +237 653 749 842
               </a>
             </Card>
           </div>
@@ -162,7 +162,7 @@ export default function Contact() {
                   name="phone"
                   value={formData.phone}
                   onChange={handleInputChange}
-                  placeholder="+1 (234) 567-890"
+                  placeholder="+237 653 749 842"
                   required
                 />
               </div>
