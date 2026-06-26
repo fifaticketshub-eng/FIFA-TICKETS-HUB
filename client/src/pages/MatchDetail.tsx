@@ -8,49 +8,7 @@ import { format } from 'date-fns';
 import { useState } from 'react';
 import { MessageCircle } from 'lucide-react';
 import { worldCup2026Matches } from './Matches';
-
-const fallbackPackages = [
-  {
-    id: 1001,
-    category: 'Category 1',
-    price: 850,
-    currency: 'USD',
-    description: 'Premium lower-tier seating with the best matchday view.',
-    benefits: ['Premium seating', 'Priority booking support', 'Flexible delivery'],
-    seatType: 'Premium Lower',
-    quantityAvailable: 24,
-  },
-  {
-    id: 1002,
-    category: 'Category 2',
-    price: 620,
-    currency: 'USD',
-    description: 'Excellent mid-level seating with a balanced stadium view.',
-    benefits: ['Excellent view', 'Verified ticket access', 'Flexible delivery'],
-    seatType: 'Mid-Level',
-    quantityAvailable: 36,
-  },
-  {
-    id: 1003,
-    category: 'Category 3',
-    price: 380,
-    currency: 'USD',
-    description: 'Good upper-level seating for reliable tournament access.',
-    benefits: ['Good view', 'Verified ticket access', 'WhatsApp booking support'],
-    seatType: 'Upper Level',
-    quantityAvailable: 48,
-  },
-  {
-    id: 1004,
-    category: 'Category 4',
-    price: 220,
-    currency: 'USD',
-    description: 'Standard seating for budget-friendly World Cup access.',
-    benefits: ['Match access', 'Verified ticket access', 'WhatsApp booking support'],
-    seatType: 'General Seating',
-    quantityAvailable: 60,
-  },
-];
+import { TICKET_CATEGORIES } from '@shared/types';
 
 export default function MatchDetail() {
   const params = useParams();
@@ -61,7 +19,21 @@ export default function MatchDetail() {
   const { data: packages, isLoading: packagesLoading } = trpc.packages.getByMatchId.useQuery({ matchId });
   const fallbackMatch = worldCup2026Matches.find((item) => item.id === matchId);
   const match = apiMatch ?? fallbackMatch;
-  const availablePackages = packages && packages.length > 0 ? packages : fallbackPackages;
+  const displayedPackages = TICKET_CATEGORIES.map((category) => {
+    const pkg = packages?.find((item) => item.category === category.name);
+    if (pkg) return pkg;
+    return {
+      id: -category.id,
+      category: category.name,
+      price: category.price,
+      currency: 'USD',
+      description: null,
+      benefits: null,
+      seatType: null,
+      quantity: 1000,
+      quantitySold: 0,
+    };
+  });
 
   if (matchLoading) {
     return (
@@ -97,12 +69,13 @@ export default function MatchDetail() {
   };
 
   const handleWhatsAppClick = (packageId?: number) => {
-    const message = packageId
-      ? `Hello! I'm interested in ${match.team1} vs ${match.team2} tickets (${match.stadium}). Could you please provide availability and pricing for the selected package?`
+    const selected = packageId ? displayedPackages.find((pkg) => pkg.id === packageId) : undefined;
+    const message = selected
+      ? `Hello! I'm interested in ${match.team1} vs ${match.team2} tickets (${match.stadium}) - ${selected.category} at ${selected.price} ${selected.currency}. Could you please confirm availability and pricing?`
       : `Hello! I'm interested in ${match.team1} vs ${match.team2} tickets at ${match.stadium} on ${format(new Date(match.matchDate), 'MMM dd, yyyy')}. Could you please provide availability and pricing information?`;
     
     const encodedMessage = encodeURIComponent(message);
-    const whatsappUrl = `https://wa.me/237653749842?text=${encodedMessage}`;
+    const whatsappUrl = `https://wa.me/17023091509?text=${encodedMessage}`;
     window.open(whatsappUrl, '_blank');
   };
 
@@ -160,7 +133,7 @@ export default function MatchDetail() {
       {/* Ticket Packages */}
       <section id="ticket-packages" className="section-padding scroll-mt-24">
         <div className="container">
-          <h2 className="text-3xl font-bold mb-8">Available Ticket Packages</h2>
+          <h2 className="text-3xl font-bold mb-8">Ticket Categories</h2>
 
           {packagesLoading ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -170,7 +143,7 @@ export default function MatchDetail() {
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              {availablePackages.map((pkg) => (
+              {displayedPackages.map((pkg) => (
                 <TicketPackageCard
                   key={pkg.id}
                   id={pkg.id}
@@ -180,7 +153,7 @@ export default function MatchDetail() {
                   description={pkg.description || undefined}
                   benefits={Array.isArray(pkg.benefits) ? pkg.benefits : pkg.benefits ? JSON.parse(pkg.benefits) : undefined}
                   seatType={pkg.seatType || undefined}
-                  quantityAvailable={'quantityAvailable' in pkg ? pkg.quantityAvailable : pkg.quantity - pkg.quantitySold}
+                  quantityAvailable={pkg.quantity - pkg.quantitySold}
                   onSelect={setSelectedPackageId}
                   isHighlighted={selectedPackageId === pkg.id}
                 />

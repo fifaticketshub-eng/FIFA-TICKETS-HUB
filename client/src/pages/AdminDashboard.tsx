@@ -3,12 +3,12 @@ import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Textarea } from '@/components/ui/textarea';
 import { trpc } from '@/lib/trpc';
-import { Edit, PackageCheck, Plus, Trash2 } from 'lucide-react';
+import { Edit, Plus, Trash2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import { useLocation } from 'wouter';
+import { TICKET_CATEGORIES } from '@shared/types';
 
 type MatchForm = {
   matchNumber: string;
@@ -25,17 +25,6 @@ type MatchForm = {
   availability: 'available' | 'limited' | 'sold_out';
 };
 
-type PackageForm = {
-  matchId: string;
-  category: 'Category 1' | 'Category 2' | 'Category 3' | 'Category 4';
-  description: string;
-  price: string;
-  currency: string;
-  quantity: string;
-  benefits: string;
-  seatType: string;
-};
-
 const emptyMatchForm: MatchForm = {
   matchNumber: '',
   team1: '',
@@ -50,40 +39,6 @@ const emptyMatchForm: MatchForm = {
   group: '',
   availability: 'available',
 };
-
-const emptyPackageForm: PackageForm = {
-  matchId: '',
-  category: 'Category 1',
-  description: '',
-  price: '',
-  currency: 'USD',
-  quantity: '',
-  benefits: '',
-  seatType: '',
-};
-
-const packageCategories = [
-  {
-    category: 'Category 1',
-    seatType: 'Premium Lower',
-    description: 'Premium seats closest to the pitch.',
-  },
-  {
-    category: 'Category 2',
-    seatType: 'Mid-Level',
-    description: 'Balanced comfort, view quality, and value.',
-  },
-  {
-    category: 'Category 3',
-    seatType: 'Upper Level',
-    description: 'Accessible matchday seats with reliable views.',
-  },
-  {
-    category: 'Category 4',
-    seatType: 'General',
-    description: 'Budget-friendly standard stadium access.',
-  },
-] as const;
 
 const toDateTimeLocalValue = (value: string | Date) => {
   const date = new Date(value);
@@ -109,7 +64,7 @@ export default function AdminDashboard() {
       <section className="gradient-fifa text-white py-10 sm:py-12 border-b border-border">
         <div className="container">
           <h1 className="text-3xl padding-10 sm:text-4xl font-bold mb-2">Admin Dashboard</h1>
-          <p className="max-w-3x max-w-full gap-7  text-base sm:text-lg text-gray-100">Manage matches, ticket packages, and customer inquiries.</p>
+          <p className="max-w-3x max-w-full gap-7  text-base sm:text-lg text-gray-100">Manage matches, ticket category pricing, and customer inquiries.</p>
         </div>
       </section>
 
@@ -118,7 +73,7 @@ export default function AdminDashboard() {
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
             <TabsList className="grid h-auto w-full grid-cols-1 gap-1 p-1 sm:grid-cols-3 sm:gap-0 sm:p-[3px] mb-8">
               <TabsTrigger value="matches">Matches</TabsTrigger>
-              <TabsTrigger value="packages">Packages</TabsTrigger>
+              <TabsTrigger value="packages">Ticket Categories</TabsTrigger>
               <TabsTrigger value="inquiries">Inquiries</TabsTrigger>
             </TabsList>
 
@@ -127,7 +82,7 @@ export default function AdminDashboard() {
             </TabsContent>
 
             <TabsContent value="packages" className="space-y-8">
-              <PackagesAdmin />
+              <TicketCategoriesAdmin />
             </TabsContent>
 
             <TabsContent value="inquiries" className="space-y-8">
@@ -317,147 +272,103 @@ function MatchesAdmin() {
   );
 }
 
-function PackagesAdmin() {
+type TicketCategoryName = (typeof TICKET_CATEGORIES)[number]["name"];
+
+const emptyPriceForm = Object.fromEntries(
+  TICKET_CATEGORIES.map((item) => [item.name, String(item.price)])
+) as Record<TicketCategoryName, string>;
+
+function TicketCategoriesAdmin() {
   const utils = trpc.useUtils();
-  const { data: matches } = trpc.matches.list.useQuery();
-  const { data: packages, isLoading } = trpc.packages.list.useQuery();
-  const createPackage = trpc.packages.create.useMutation();
-  const updatePackage = trpc.packages.update.useMutation();
-  const deletePackage = trpc.packages.delete.useMutation();
-  const [showForm, setShowForm] = useState(false);
-  const [editingPackageId, setEditingPackageId] = useState<number | null>(null);
-  const [form, setForm] = useState<PackageForm>(emptyPackageForm);
+  const { data: matches, isLoading: matchesLoading } = trpc.matches.list.useQuery();
+  const ensureForMatch = trpc.packages.ensureStandardForMatch.useMutation();
+  const ensureForAllMatches = trpc.packages.ensureStandardForAllMatches.useMutation();
+  const setPricesForMatch = trpc.packages.setPricesForMatch.useMutation();
 
-  const updateField = (field: keyof PackageForm, value: string) => {
-    setForm((current) => ({ ...current, [field]: value }));
-  };
+  const [selectedMatchId, setSelectedMatchId] = useState<number | null>(null);
+  const [prices, setPrices] = useState<Record<TicketCategoryName, string>>(emptyPriceForm);
 
-  const resetForm = () => {
-    setForm(emptyPackageForm);
-    setEditingPackageId(null);
-    setShowForm(false);
-  };
+  const { data: matchPackages, isLoading: packagesLoading } = trpc.packages.getByMatchId.useQuery(
+    { matchId: selectedMatchId ?? 0 },
+    { enabled: selectedMatchId !== null }
+  );
 
-  const handleEdit = (pkg: NonNullable<typeof packages>[number]) => {
-    setForm({
-      matchId: String(pkg.matchId),
-      category: pkg.category,
-      description: pkg.description || '',
-      price: String(pkg.price),
-      currency: pkg.currency,
-      quantity: String(pkg.quantity),
-      benefits: pkg.benefits ? JSON.parse(pkg.benefits).join('\n') : '',
-      seatType: pkg.seatType || '',
+  useEffect(() => {
+    if (selectedMatchId === null) return;
+    const nextPrices = { ...emptyPriceForm };
+    matchPackages?.forEach((pkg) => {
+      nextPrices[pkg.category as TicketCategoryName] = String(pkg.price);
     });
-    setEditingPackageId(pkg.id);
-    setShowForm(true);
-  };
+    setPrices(nextPrices);
+  }, [selectedMatchId, matchPackages]);
 
-  const handleSave = async (event: React.FormEvent) => {
-    event.preventDefault();
+  const handleInitializeMatch = async () => {
+    if (selectedMatchId === null) return;
     try {
-      const benefits = form.benefits
-        .split('\n')
-        .map((item) => item.trim())
-        .filter(Boolean);
-
-      const payload = {
-        matchId: Number(form.matchId),
-        category: form.category,
-        description: form.description || undefined,
-        price: Number(form.price),
-        currency: form.currency || 'USD',
-        quantity: Number(form.quantity),
-        benefits: benefits.length ? JSON.stringify(benefits) : undefined,
-        seatType: form.seatType || undefined,
-      };
-
-      if (editingPackageId) {
-        const { matchId: _matchId, ...data } = payload;
-        await updatePackage.mutateAsync({ id: editingPackageId, data });
-        toast.success('Package updated');
-      } else {
-        await createPackage.mutateAsync(payload);
-        toast.success('Package added');
-      }
-      resetForm();
-      await utils.packages.list.invalidate();
-    } catch (error) {
-      console.error('Could not save package:', error);
-      toast.error('Could not save package. Select a match and check the form values.');
-    }
-  };
-
-  const handleDelete = async (id: number) => {
-    try {
-      await deletePackage.mutateAsync({ id });
-      toast.success('Package deleted');
-      await utils.packages.list.invalidate();
+      await ensureForMatch.mutateAsync({ matchId: selectedMatchId });
+      await utils.packages.getByMatchId.invalidate({ matchId: selectedMatchId });
+      toast.success("Ticket categories initialized");
     } catch {
-      toast.error('Could not delete package');
+      toast.error("Could not initialize ticket categories");
     }
   };
 
-  const packageSummary = packageCategories.map((item) => {
-    const categoryPackages = packages?.filter((pkg) => pkg.category === item.category) || [];
-    const totalQuantity = categoryPackages.reduce((sum, pkg) => sum + pkg.quantity, 0);
-    const availableQuantity = categoryPackages.reduce((sum, pkg) => sum + Math.max(pkg.quantity - pkg.quantitySold, 0), 0);
+  const handleInitializeAll = async () => {
+    try {
+      await ensureForAllMatches.mutateAsync();
+      if (selectedMatchId !== null) {
+        await utils.packages.getByMatchId.invalidate({ matchId: selectedMatchId });
+      }
+      toast.success("Ticket categories initialized for all matches");
+    } catch {
+      toast.error("Could not initialize categories for all matches");
+    }
+  };
 
-    return {
-      ...item,
-      packageCount: categoryPackages.length,
-      totalQuantity,
-      availableQuantity,
-    };
-  });
+  const handleSavePrices = async () => {
+    if (selectedMatchId === null) return;
+    try {
+      await setPricesForMatch.mutateAsync({
+        matchId: selectedMatchId,
+        prices: TICKET_CATEGORIES.map((item) => ({
+          category: item.name,
+          price: Number(prices[item.name]),
+        })),
+      });
+      await utils.packages.getByMatchId.invalidate({ matchId: selectedMatchId });
+      toast.success("Prices updated");
+    } catch {
+      toast.error("Could not update prices");
+    }
+  };
 
   return (
     <>
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h2 className="text-2xl font-bold">Manage Ticket Packages</h2>
-          <p className="text-muted-foreground">The system supports 4 package categories. Review existing packages and availability.</p>
+          <h2 className="text-2xl font-bold">Ticket Category Prices</h2>
+          <p className="text-muted-foreground">Each match has 4 standard ticket categories. Update prices per match.</p>
         </div>
-        <Button onClick={() => showForm ? resetForm() : setShowForm(true)} className="w-full bg-fifa-navy text-white hover:bg-fifa-gold hover:text-fifa-navy sm:w-auto">
-          <Plus className="mr-2 h-5 w-5" />
-          Add Package
+        <Button
+          type="button"
+          variant="outline"
+          disabled={ensureForAllMatches.isPending || matchesLoading}
+          onClick={handleInitializeAll}
+          className="w-full sm:w-auto"
+        >
+          {ensureForAllMatches.isPending ? "Initializing..." : "Initialize All Matches"}
         </Button>
       </div>
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        {packageSummary.map((item) => (
-          <Card key={item.category} className="p-5">
-            <div className="mb-4 flex items-start justify-between gap-3">
-              <div>
-                <h3 className="text-lg font-bold">{item.category}</h3>
-                <p className="text-sm text-muted-foreground">{item.seatType}</p>
-              </div>
-              <PackageCheck className="h-5 w-5 shrink-0 text-fifa-gold" />
-            </div>
-            <p className="min-h-10 text-sm text-muted-foreground">{item.description}</p>
-            <div className="mt-5 grid grid-cols-3 gap-2 text-center">
-              <div>
-                <p className="text-xl font-bold text-fifa-navy dark:text-white">{item.packageCount}</p>
-                <p className="text-xs text-muted-foreground">Packages</p>
-              </div>
-              <div>
-                <p className="text-xl font-bold text-fifa-navy dark:text-white">{item.totalQuantity}</p>
-                <p className="text-xs text-muted-foreground">Total</p>
-              </div>
-              <div>
-                <p className="text-xl font-bold text-fifa-navy dark:text-white">{item.availableQuantity}</p>
-                <p className="text-xs text-muted-foreground">Available</p>
-              </div>
-            </div>
-          </Card>
-        ))}
-      </div>
-
-      {showForm && (
-        <Card className="p-6">
-          <form onSubmit={handleSave} className="grid grid-cols-1 gap-5 md:grid-cols-2">
-            <Select value={form.matchId} onValueChange={(value) => updateField('matchId', value)}>
-              <SelectTrigger className="w-full"><SelectValue placeholder="Select match" /></SelectTrigger>
+      <Card className="p-6">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-[1fr_auto] md:items-end">
+          <div className="space-y-2">
+            <p className="text-sm font-medium">Select match</p>
+            <Select
+              value={selectedMatchId ? String(selectedMatchId) : ""}
+              onValueChange={(value) => setSelectedMatchId(Number(value))}
+            >
+              <SelectTrigger className="w-full"><SelectValue placeholder="Choose match" /></SelectTrigger>
               <SelectContent>
                 {matches && matches.length > 0 ? matches.map((match) => (
                   <SelectItem key={match.id} value={String(match.id)}>
@@ -468,113 +379,46 @@ function PackagesAdmin() {
                 )}
               </SelectContent>
             </Select>
-            <Select value={form.category} onValueChange={(value) => updateField('category', value)}>
-              <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="Category 1">Category 1</SelectItem>
-                <SelectItem value="Category 2">Category 2</SelectItem>
-                <SelectItem value="Category 3">Category 3</SelectItem>
-                <SelectItem value="Category 4">Category 4</SelectItem>
-              </SelectContent>
-            </Select>
-            <Input required placeholder="Price" type="number" step="0.01" value={form.price} onChange={(e) => updateField('price', e.target.value)} />
-            <Input required placeholder="Quantity" type="number" value={form.quantity} onChange={(e) => updateField('quantity', e.target.value)} />
-            <Input placeholder="Currency" value={form.currency} onChange={(e) => updateField('currency', e.target.value.toUpperCase())} />
-            <Input placeholder="Seat type" value={form.seatType} onChange={(e) => updateField('seatType', e.target.value)} />
-            <Textarea className="md:col-span-2" placeholder="Description" value={form.description} onChange={(e) => updateField('description', e.target.value)} />
-            <Textarea className="md:col-span-2" placeholder="Benefits, one per line" value={form.benefits} onChange={(e) => updateField('benefits', e.target.value)} />
-            <Button type="submit" disabled={createPackage.isPending || updatePackage.isPending || !form.matchId || form.matchId === 'no-matches'} className="md:col-span-2 bg-fifa-gold text-fifa-navy hover:bg-fifa-navy hover:text-white">
-              {createPackage.isPending || updatePackage.isPending ? 'Saving...' : editingPackageId ? 'Update Package' : 'Save Package'}
-            </Button>
-          </form>
+          </div>
+
+          <Button
+            type="button"
+            onClick={handleInitializeMatch}
+            disabled={selectedMatchId === null || ensureForMatch.isPending || packagesLoading}
+            className="bg-fifa-navy text-white hover:bg-fifa-gold hover:text-fifa-navy"
+          >
+            {ensureForMatch.isPending ? "Initializing..." : "Initialize Match"}
+          </Button>
+        </div>
+      </Card>
+
+      {selectedMatchId !== null && (
+        <Card className="p-6">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+            {TICKET_CATEGORIES.map((category) => (
+              <div key={category.id} className="space-y-2">
+                <p className="text-sm font-medium">{category.name}</p>
+                <Input
+                  type="number"
+                  step="0.01"
+                  value={prices[category.name]}
+                  onChange={(e) =>
+                    setPrices((current) => ({ ...current, [category.name]: e.target.value }))
+                  }
+                />
+              </div>
+            ))}
+          </div>
+          <Button
+            type="button"
+            onClick={handleSavePrices}
+            disabled={setPricesForMatch.isPending || packagesLoading}
+            className="mt-6 w-full bg-fifa-gold text-fifa-navy hover:bg-fifa-navy hover:text-white"
+          >
+            {setPricesForMatch.isPending ? "Saving..." : "Save Prices"}
+          </Button>
         </Card>
       )}
-
-      <div className="grid gap-4 md:hidden">
-        {isLoading ? (
-          <Card className="p-6 text-muted-foreground">Loading packages...</Card>
-        ) : packages && packages.length > 0 ? (
-          packages.map((pkg) => {
-            const match = matches?.find((item) => item.id === pkg.matchId);
-            const available = pkg.quantity - pkg.quantitySold;
-
-            return (
-              <Card key={pkg.id} className="p-5">
-                <div className="mb-4 flex items-start justify-between gap-3">
-                  <div>
-                    <h3 className="text-lg font-bold">{pkg.category}</h3>
-                    <p className="text-sm text-muted-foreground">{match ? `${match.team1} vs ${match.team2}` : `Match #${pkg.matchId}`}</p>
-                  </div>
-                  <p className="shrink-0 text-right font-semibold text-fifa-navy dark:text-white">{pkg.price} {pkg.currency}</p>
-                </div>
-                <div className="mb-4 grid grid-cols-2 gap-3 text-sm">
-                  <div>
-                    <p className="text-muted-foreground">Available</p>
-                    <p className="font-semibold">{available}</p>
-                  </div>
-                  <div>
-                    <p className="text-muted-foreground">Seat Type</p>
-                    <p className="font-semibold">{pkg.seatType || 'Not set'}</p>
-                  </div>
-                </div>
-                <Button variant="ghost" size="sm" onClick={() => handleEdit(pkg)} className="mb-2 w-full justify-center text-fifa-navy hover:text-fifa-gold dark:text-white">
-                  <Edit className="h-4 w-4" />
-                  Edit
-                </Button>
-                <Button variant="ghost" size="sm" onClick={() => handleDelete(pkg.id)} className="w-full justify-center text-red-600 hover:text-red-700">
-                  <Trash2 className="h-4 w-4" />
-                  Delete
-                </Button>
-              </Card>
-            );
-          })
-        ) : (
-          <Card className="p-6 text-muted-foreground">No packages available.</Card>
-        )}
-      </div>
-
-      <Card className="hidden overflow-x-auto md:block">
-        <table className="w-full min-w-[760px]">
-          <thead>
-            <tr className="border-b-2 border-fifa-navy">
-              <th className="text-left py-4 px-4 font-bold">Category</th>
-              <th className="text-left py-4 px-4 font-bold">Match</th>
-              <th className="text-left py-4 px-4 font-bold">Price</th>
-              <th className="text-left py-4 px-4 font-bold">Available</th>
-              <th className="text-center py-4 px-4 font-bold">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {isLoading ? (
-              <tr><td className="p-6 text-muted-foreground" colSpan={5}>Loading packages...</td></tr>
-            ) : packages && packages.length > 0 ? (
-              packages?.map((pkg) => {
-                const match = matches?.find((item) => item.id === pkg.matchId);
-                return (
-                  <tr key={pkg.id} className="border-b border-border hover:bg-muted transition-colors">
-                    <td className="py-4 px-4 font-semibold">{pkg.category}</td>
-                    <td className="py-4 px-4 text-muted-foreground">{match ? `${match.team1} vs ${match.team2}` : `Match #${pkg.matchId}`}</td>
-                    <td className="py-4 px-4 text-muted-foreground">{pkg.price} {pkg.currency}</td>
-                    <td className="py-4 px-4 text-muted-foreground">{pkg.quantity - pkg.quantitySold}</td>
-                    <td className="py-4 px-4 text-center">
-                      <Button variant="ghost" size="sm" onClick={() => handleEdit(pkg)} className="inline-flex items-center gap-1 text-fifa-navy hover:text-fifa-gold dark:text-white">
-                        <Edit className="h-4 w-4" />
-                        Edit
-                      </Button>
-                      <Button variant="ghost" size="sm" onClick={() => handleDelete(pkg.id)} className="inline-flex items-center gap-1 text-red-600 hover:text-red-700">
-                        <Trash2 className="h-4 w-4" />
-                        Delete
-                      </Button>
-                    </td>
-                  </tr>
-                );
-              })
-            ) : (
-              <tr><td className="p-6 text-muted-foreground" colSpan={5}>No packages available.</td></tr>
-            )}
-          </tbody>
-        </table>
-      </Card>
     </>
   );
 }

@@ -28,7 +28,7 @@ export default function Navigation() {
   const navLinks = [
     { href: '/', label: 'Home' },
     { href: '/matches', label: 'Matches' },
-    { href: '/packages', label: 'Packages' },
+    { href: '/packages', label: 'Categories' },
     { href: '/verify-ticket', label: 'Verify Ticket' },
     { href: '/about', label: 'About' },
     { href: '/faq', label: 'FAQ' },

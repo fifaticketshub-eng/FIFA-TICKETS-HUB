@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { trpc } from '@/lib/trpc';
 
 export type Availability = 'available' | 'limited' | 'sold_out';
 
@@ -175,14 +176,36 @@ function stageLabel(stage: DisplayMatch['stage']) {
 }
 
 export default function Matches() {
+  const { data: apiMatches, isLoading: matchesLoading } = trpc.matches.list.useQuery();
   const [stageFilter, setStageFilter] = useState('all');
   const [groupFilter, setGroupFilter] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
 
+  const allMatches = useMemo(() => {
+    if (apiMatches && apiMatches.length > 0) {
+      return apiMatches.map((match: any) => ({
+        id: match.id,
+        matchNumber: match.matchNumber,
+        team1: match.team1,
+        team1Code: match.team1Code,
+        team2: match.team2,
+        team2Code: match.team2Code,
+        stadium: match.stadium,
+        city: match.city,
+        country: match.country,
+        matchDate: new Date(match.matchDate),
+        stage: match.stage,
+        group: match.group || 'A',
+        availability: match.availability || 'available',
+      }));
+    }
+    return worldCup2026Matches;
+  }, [apiMatches]);
+
   const filteredMatches = useMemo(() => {
     const normalizedSearch = searchTerm.trim().toLowerCase();
 
-    return worldCup2026Matches.filter((match) => {
+    return allMatches.filter((match) => {
       const matchesStage = stageFilter === 'all' || match.stage === stageFilter;
       const matchesGroup = groupFilter === 'all' || match.group === groupFilter;
       const matchesSearch =
@@ -196,7 +219,7 @@ export default function Matches() {
 
       return matchesStage && matchesGroup && matchesSearch;
     });
-  }, [groupFilter, searchTerm, stageFilter]);
+  }, [allMatches, groupFilter, searchTerm, stageFilter]);
 
   const hasActiveFilters = stageFilter !== 'all' || groupFilter !== 'all' || searchTerm !== '';
 

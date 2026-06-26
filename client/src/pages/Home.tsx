@@ -48,7 +48,7 @@
                   <Button
                     onClick={() => {
                       const message = encodeURIComponent('Hello! I\'m interested in FIFA World Cup tickets.');
-                      window.open(`https://wa.me/237653749842?text=${message}`, '_blank');
+                      window.open(`https://wa.me/17023091509?text=${message}`, '_blank');
                     }}
                     variant="outline"
                     className="w-full sm:w-auto border-2 border-white bg-white/10 text-white hover:bg-white hover:text-fifa-navy hover:border-white px-8 py-6 text-lg font-semibold shadow-lg"
@@ -195,7 +195,7 @@
               <Button 
                 onClick={() => {
                   const message = encodeURIComponent('Hello! I\'m ready to secure my FIFA World Cup tickets. Can you help me?');
-                  window.open(`https://wa.me/237653749842?text=${message}`, '_blank');
+                  window.open(`https://wa.me/17023091509?text=${message}`, '_blank');
                 }}
                 className="w-full sm:w-auto bg-fifa-gold text-fifa-navy hover:bg-yellow-400 hover:text-fifa-navy px-8 py-6 text-lg font-semibold shadow-lg"
               >

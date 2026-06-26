@@ -1,23 +1,12 @@
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { trpc } from '@/lib/trpc';
 import TicketPackageCard from '@/components/TicketPackageCard';
 import { useState } from 'react';
 import { MessageCircle } from 'lucide-react';
+import { TICKET_CATEGORIES } from '@shared/types';
 
 export default function Packages() {
-  const { data: packages, isLoading } = trpc.packages.list.useQuery();
   const [selectedPackageId, setSelectedPackageId] = useState<number | null>(null);
-
-  // Group packages by category
-  const groupedPackages = packages?.reduce((acc, pkg) => {
-    const category = pkg.category;
-    if (!acc[category]) {
-      acc[category] = [];
-    }
-    acc[category].push(pkg);
-    return acc;
-  }, {} as Record<string, typeof packages>) || {};
 
   const categoryOrder = ['Category 1', 'Category 2', 'Category 3', 'Category 4'];
   const categoryAnchors: Record<string, string> = {
@@ -50,13 +39,12 @@ export default function Packages() {
   };
 
   const handleWhatsAppClick = (packageId: number) => {
-    const pkg = packages?.find((p) => p.id === packageId);
-    if (pkg) {
-      const message = `Hello! I'm interested in ${pkg.category} tickets at ${pkg.price} ${pkg.currency}. Could you please provide more details and availability?`;
-      const encodedMessage = encodeURIComponent(message);
-      const whatsappUrl = `https://wa.me/237653749842?text=${encodedMessage}`;
-      window.open(whatsappUrl, '_blank');
-    }
+    const pkg = TICKET_CATEGORIES.find((item) => item.id === packageId);
+    if (!pkg) return;
+    const message = `Hello! I'm interested in ${pkg.name} tickets at ${pkg.price} USD. Could you please provide more details and availability?`;
+    const encodedMessage = encodeURIComponent(message);
+    const whatsappUrl = `https://wa.me/17023091509?text=${encodedMessage}`;
+    window.open(whatsappUrl, '_blank');
   };
 
   return (
@@ -72,131 +60,98 @@ export default function Packages() {
       {/* Comparison Section */}
       <section className="section-padding">
         <div className="container">
-          {isLoading ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              {[1, 2, 3, 4].map((i) => (
-                <Card key={i} className="h-96 bg-muted animate-pulse" />
-              ))}
-            </div>
-          ) : (
-            <>
-              {/* Category-based display */}
-              <div className="flex flex-wrap gap-6">
-                {categoryOrder.map((category) => {
-                  const categoryPackages = groupedPackages[category] || [];
-                  const details = categoryDetails[category];
+          <div className="flex flex-wrap gap-6">
+            {categoryOrder.map((categoryName) => {
+              const category = TICKET_CATEGORIES.find((item) => item.name === categoryName);
+              const details = categoryDetails[categoryName];
+              if (!category) return null;
 
-                  return (
-                    <Card
-                      key={category}
-                      id={categoryAnchors[category]}
-                      className="scroll-mt-24 flex min-h-[360px] flex-1 basis-full flex-col p-6 md:basis-[calc(50%-0.75rem)] xl:basis-[calc(25%-1.125rem)]"
-                    >
-                      <div className="mb-6">
-                        <h2 className="text-2xl font-bold mb-2">{category}</h2>
-                        <p className="text-muted-foreground">{details.description}</p>
-                      </div>
-                      <div className="flex flex-1 flex-col gap-4">
-                        {categoryPackages.length > 0 ? (
-                          categoryPackages.map((pkg) => (
-                            <TicketPackageCard
-                              key={pkg.id}
-                              id={pkg.id}
-                              category={pkg.category}
-                              price={parseFloat(pkg.price.toString())}
-                              currency={pkg.currency}
-                              description={pkg.description || undefined}
-                              benefits={pkg.benefits ? JSON.parse(pkg.benefits) : undefined}
-                              seatType={pkg.seatType || undefined}
-                              quantityAvailable={pkg.quantity - pkg.quantitySold}
-                              onSelect={setSelectedPackageId}
-                              isHighlighted={selectedPackageId === pkg.id}
-                            />
-                          ))
-                        ) : (
-                          <div className="flex flex-1 flex-col">
-                            <h3 className="text-xl font-semibold mb-2">{details.seating}</h3>
-                            <p className="text-muted-foreground mb-4">{details.description}</p>
-                            <p className="font-semibold text-fifa-navy mb-6">{details.priceHint}</p>
-                            <Button
-                              onClick={() => {
-                                const message = `Hello! I'm interested in ${category} FIFA World Cup tickets. Could you please provide availability and pricing information?`;
-                                window.open(`https://wa.me/237653749842?text=${encodeURIComponent(message)}`, '_blank');
-                              }}
-                              className="mt-auto w-full bg-fifa-navy text-white hover:opacity-90"
-                            >
-                              Ask About {category}
-                            </Button>
-                          </div>
-                        )}
-                      </div>
-                    </Card>
-                  );
-                })}
-              </div>
+              return (
+                <Card
+                  key={category.name}
+                  id={categoryAnchors[category.name]}
+                  className="scroll-mt-24 flex min-h-[360px] flex-1 basis-full flex-col p-6 md:basis-[calc(50%-0.75rem)] xl:basis-[calc(25%-1.125rem)]"
+                >
+                  <div className="mb-6">
+                    <h2 className="text-2xl font-bold mb-2">{category.name}</h2>
+                    <p className="text-muted-foreground">{details.description}</p>
+                  </div>
+                  <div className="flex flex-1 flex-col gap-4">
+                    <TicketPackageCard
+                      id={category.id}
+                      category={category.name}
+                      price={category.price}
+                      currency="USD"
+                      description={details.seating}
+                      quantityAvailable={9999}
+                      onSelect={setSelectedPackageId}
+                      isHighlighted={selectedPackageId === category.id}
+                    />
+                  </div>
+                </Card>
+              );
+            })}
+          </div>
 
-              {/* Comparison Table */}
-              <div className="mt-16 overflow-x-auto">
-                <h2 className="text-2xl font-bold mb-6 sm:text-3xl sm:mb-8">Feature Comparison</h2>
-                <table className="w-full min-w-[720px] border-collapse">
-                  <thead>
-                    <tr className="border-b-2 border-fifa-navy">
-                      <th className="text-left py-4 px-4 font-bold">Feature</th>
-                      {categoryOrder.map((category) => (
-                        <th key={category} className="text-center py-4 px-4 font-bold">
-                          {category}
-                        </th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr className="border-b border-border">
-                      <td className="py-4 px-4 font-semibold">Seating Location</td>
-                      <td className="text-center py-4 px-4">Premium Lower</td>
-                      <td className="text-center py-4 px-4">Mid-Level</td>
-                      <td className="text-center py-4 px-4">Upper Level</td>
-                      <td className="text-center py-4 px-4">General</td>
-                    </tr>
-                    <tr className="border-b border-border">
-                      <td className="py-4 px-4 font-semibold">View Quality</td>
-                      <td className="text-center py-4 px-4">⭐⭐⭐⭐⭐</td>
-                      <td className="text-center py-4 px-4">⭐⭐⭐⭐</td>
-                      <td className="text-center py-4 px-4">⭐⭐⭐</td>
-                      <td className="text-center py-4 px-4">⭐⭐</td>
-                    </tr>
-                    <tr className="border-b border-border">
-                      <td className="py-4 px-4 font-semibold">VIP Lounge Access</td>
-                      <td className="text-center py-4 px-4">✓</td>
-                      <td className="text-center py-4 px-4">✓</td>
-                      <td className="text-center py-4 px-4">-</td>
-                      <td className="text-center py-4 px-4">-</td>
-                    </tr>
-                    <tr className="border-b border-border">
-                      <td className="py-4 px-4 font-semibold">Complimentary Drinks</td>
-                      <td className="text-center py-4 px-4">✓</td>
-                      <td className="text-center py-4 px-4">-</td>
-                      <td className="text-center py-4 px-4">-</td>
-                      <td className="text-center py-4 px-4">-</td>
-                    </tr>
-                    <tr className="border-b border-border">
-                      <td className="py-4 px-4 font-semibold">Premium Parking</td>
-                      <td className="text-center py-4 px-4">✓</td>
-                      <td className="text-center py-4 px-4">✓</td>
-                      <td className="text-center py-4 px-4">-</td>
-                      <td className="text-center py-4 px-4">-</td>
-                    </tr>
-                    <tr>
-                      <td className="py-4 px-4 font-semibold">Flexible Exchange</td>
-                      <td className="text-center py-4 px-4">✓</td>
-                      <td className="text-center py-4 px-4">✓</td>
-                      <td className="text-center py-4 px-4">✓</td>
-                      <td className="text-center py-4 px-4">-</td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-            </>
-          )}
+          <div className="mt-16 overflow-x-auto">
+            <h2 className="text-2xl font-bold mb-6 sm:text-3xl sm:mb-8">Feature Comparison</h2>
+            <table className="w-full min-w-[720px] border-collapse">
+              <thead>
+                <tr className="border-b-2 border-fifa-navy">
+                  <th className="text-left py-4 px-4 font-bold">Feature</th>
+                  {categoryOrder.map((category) => (
+                    <th key={category} className="text-center py-4 px-4 font-bold">
+                      {category}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                <tr className="border-b border-border">
+                  <td className="py-4 px-4 font-semibold">Seating Location</td>
+                  <td className="text-center py-4 px-4">Premium Lower</td>
+                  <td className="text-center py-4 px-4">Mid-Level</td>
+                  <td className="text-center py-4 px-4">Upper Level</td>
+                  <td className="text-center py-4 px-4">General</td>
+                </tr>
+                <tr className="border-b border-border">
+                  <td className="py-4 px-4 font-semibold">View Quality</td>
+                  <td className="text-center py-4 px-4">⭐⭐⭐⭐⭐</td>
+                  <td className="text-center py-4 px-4">⭐⭐⭐⭐</td>
+                  <td className="text-center py-4 px-4">⭐⭐⭐</td>
+                  <td className="text-center py-4 px-4">⭐⭐</td>
+                </tr>
+                <tr className="border-b border-border">
+                  <td className="py-4 px-4 font-semibold">VIP Lounge Access</td>
+                  <td className="text-center py-4 px-4">✓</td>
+                  <td className="text-center py-4 px-4">✓</td>
+                  <td className="text-center py-4 px-4">-</td>
+                  <td className="text-center py-4 px-4">-</td>
+                </tr>
+                <tr className="border-b border-border">
+                  <td className="py-4 px-4 font-semibold">Complimentary Drinks</td>
+                  <td className="text-center py-4 px-4">✓</td>
+                  <td className="text-center py-4 px-4">-</td>
+                  <td className="text-center py-4 px-4">-</td>
+                  <td className="text-center py-4 px-4">-</td>
+                </tr>
+                <tr className="border-b border-border">
+                  <td className="py-4 px-4 font-semibold">Premium Parking</td>
+                  <td className="text-center py-4 px-4">✓</td>
+                  <td className="text-center py-4 px-4">✓</td>
+                  <td className="text-center py-4 px-4">-</td>
+                  <td className="text-center py-4 px-4">-</td>
+                </tr>
+                <tr>
+                  <td className="py-4 px-4 font-semibold">Flexible Exchange</td>
+                  <td className="text-center py-4 px-4">✓</td>
+                  <td className="text-center py-4 px-4">✓</td>
+                  <td className="text-center py-4 px-4">✓</td>
+                  <td className="text-center py-4 px-4">-</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
         </div>
       </section>
 
@@ -205,10 +160,10 @@ export default function Packages() {
         <div className="container text-center">
           <h2 className="text-2xl font-bold mb-6 sm:text-4xl bg-gradient-to-r from-yellow-300 via-yellow-500 to-amber-600 bg-clip-text text-transparent">Find Your Perfect Ticket</h2>
           <p className="mx-auto max-w-3xl max-w-full text-lg text-gray-100 mb-8 sm:text-xl">
-            Contact our team to discuss which category suits your needs best and get special pricing.
+            Contact our team to discuss which category suits your needs best and confirm match-specific pricing.
           </p>
           <Button
-            onClick={() => handleWhatsAppClick(selectedPackageId || packages?.[0]?.id || 0)}
+            onClick={() => handleWhatsAppClick(selectedPackageId || TICKET_CATEGORIES[0]?.id || 0)}
             className="w-full bg-white text-fifa-navy hover:bg-gray-100 px-6 py-6 text-base font-semibold inline-flex items-center gap-2 sm:w-auto sm:px-8 sm:text-lg"
           >
             <MessageCircle className="w-5 h-5" />

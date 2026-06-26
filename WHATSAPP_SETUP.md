@@ -41,18 +41,18 @@ Find:
 
 ```tsx
 <WhatsAppButton 
-  phoneNumber="237653749842"
+  phoneNumber="17023091509"
   message="Hello! I'm interested in FIFA World Cup tickets. Could you please provide availability and pricing information?"
 />
 ```
 
-Replace `237653749842` with your real WhatsApp number.
+Replace `17023091509` with your real WhatsApp number.
 
 Example:
 
 ```tsx
 <WhatsAppButton 
-  phoneNumber="237612345678"
+  phoneNumber="17023091509"
   message="Hello! I'm interested in FIFA World Cup tickets. Could you please provide availability and pricing information?"
 />
 ```
@@ -62,13 +62,13 @@ Example:
 Some pages also open WhatsApp directly with:
 
 ```tsx
-https://wa.me/237653749842
+https://wa.me/17023091509
 ```
 
 Search the project for:
 
 ```text
-237653749842
+  17023091509
 ```
 
 Replace every occurrence with your real number.

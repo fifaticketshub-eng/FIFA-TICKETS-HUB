@@ -8,7 +8,7 @@ interface WhatsAppButtonProps {
 
 export default function WhatsAppButton({ 
   message = "Hello! I'm interested in FIFA World Cup tickets. Could you please provide availability and pricing information?",
-  phoneNumber = "237653749842" // Replace with actual WhatsApp number
+  phoneNumber = "17023091509"
 }: WhatsAppButtonProps) {
   const [isVisible, setIsVisible] = useState(true);
 

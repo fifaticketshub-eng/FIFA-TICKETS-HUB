@@ -32,28 +32,28 @@ export default function About() {
                 Whether you're a casual fan or a dedicated supporter, we have the perfect ticket option for you.
               </p>
             </div>
-            <Card className="p-8 bg-fifa-navy bg-gradient-fifa text-white border-none">
-              <h3 className="text-2xl font-bold mb-6 text-white">Our Commitment</h3>
-              <ul className="space-y-4">
-                <li className="flex items-start gap-3">
-                  <CheckCircle className="w-6 h-6 flex-shrink-0 mt-1" />
-                  <span>100% authentic tickets from official sources</span>
+            <Card className="p-8 bg-fifa-navy bg-gradient-fifa text-white border-none dark:bg-[#10294d]">
+              <h3 className="text-2xl font-bold mb-6 text-white dark:text-gray-100">Our Commitment</h3>
+              <ul className="space-y-4 dark:text-gray-100">
+                <li className="flex items-start gap-3 dark:text-gray-100">
+                  <CheckCircle className="w-6 h-6 flex-shrink-0 mt-1 text-white dark:text-gray-100" />
+                  <span className="dark:text-gray-100">100% authentic tickets from official sources</span>
                 </li>
-                <li className="flex items-start gap-3">
-                  <CheckCircle className="w-6 h-6 flex-shrink-0 mt-1" />
-                  <span>Transparent pricing with no hidden fees</span>
+                <li className="flex items-start gap-3 dark:text-gray-100">
+                  <CheckCircle className="w-6 h-6 flex-shrink-0 mt-1 text-white dark:text-gray-100" />
+                  <span className="dark:text-gray-100">Transparent pricing with no hidden fees</span>
                 </li>
-                <li className="flex items-start gap-3">
-                  <CheckCircle className="w-6 h-6 flex-shrink-0 mt-1" />
-                  <span>Fast, reliable customer support</span>
+                <li className="flex items-start gap-3 dark:text-gray-100">
+                  <CheckCircle className="w-6 h-6 flex-shrink-0 mt-1 text-white dark:text-gray-100" />
+                  <span className="dark:text-gray-100">Fast, reliable customer support</span>
                 </li>
-                <li className="flex items-start gap-3">
-                  <CheckCircle className="w-6 h-6 flex-shrink-0 mt-1" />
-                  <span>Secure transactions and buyer protection</span>
+                <li className="flex items-start gap-3 dark:text-gray-100">
+                  <CheckCircle className="w-6 h-6 flex-shrink-0 mt-1 text-white dark:text-gray-100" />
+                  <span className="dark:text-gray-100">Secure transactions and buyer protection</span>
                 </li>
-                <li className="flex items-start gap-3">
-                  <CheckCircle className="w-6 h-6 flex-shrink-0 mt-1" />
-                  <span>Worldwide delivery and support</span>
+                <li className="flex items-start gap-3 dark:text-gray-100">
+                  <CheckCircle className="w-6 h-6 flex-shrink-0 mt-1 text-white dark:text-gray-100" />
+                  <span className="dark:text-gray-100">Worldwide delivery and support</span>
                 </li>
               </ul>
             </Card>

@@ -204,6 +204,33 @@ export const appRouter = router({
         return db.getPackagesByMatchId(input.matchId);
       }),
 
+    ensureStandardForMatch: adminProcedure
+      .input(z.object({ matchId: z.number() }))
+      .mutation(async ({ input }) => {
+        return db.ensureStandardPackagesForMatch(input.matchId);
+      }),
+
+    ensureStandardForAllMatches: adminProcedure
+      .mutation(async () => {
+        return db.ensureStandardPackagesForAllMatches();
+      }),
+
+    setPricesForMatch: adminProcedure
+      .input(
+        z.object({
+          matchId: z.number(),
+          prices: z.array(
+            z.object({
+              category: z.enum(['Category 1', 'Category 2', 'Category 3', 'Category 4']),
+              price: z.number(),
+            })
+          ),
+        })
+      )
+      .mutation(async ({ input }) => {
+        return db.setMatchCategoryPrices(input.matchId, input.prices);
+      }),
+
     create: adminProcedure
       .input(z.object({
         matchId: z.number(),

@@ -1,6 +1,7 @@
 import { Pool } from "pg";
 import type { QueryResultRow } from "pg";
 import { ENV } from "./_core/env";
+import { TICKET_CATEGORIES } from "@shared/types";
 
 type UserRole = "user" | "admin";
 type MatchStage = "group" | "round_of_16" | "quarter_final" | "semi_final" | "final";
@@ -106,6 +107,122 @@ let localInquiries: CustomerInquiry[] = [];
 let nextLocalMatchId = Math.max(...localMatches.map(match => match.id)) + 1;
 let nextLocalPackageId = 1;
 let nextLocalInquiryId = 1;
+
+const DEFAULT_CATEGORY_CURRENCY = "USD";
+const DEFAULT_CATEGORY_QUANTITY = 1000;
+
+function ensureLocalStandardPackagesForMatch(matchId: number) {
+  const required = TICKET_CATEGORIES.map((item) => item.name);
+  const existing = localPackages.filter((pkg) => pkg.matchId === matchId);
+  const existingCategories = new Set(existing.map((pkg) => pkg.category));
+
+  const missing = required.filter((category) => !existingCategories.has(category));
+  if (missing.length === 0) return existing;
+
+  const created: LocalPackage[] = missing.map((category) => {
+    const defaultPrice = TICKET_CATEGORIES.find((item) => item.name === category)?.price ?? 0;
+    return {
+      id: nextLocalPackageId++,
+      matchId,
+      category,
+      description: null,
+      price: String(defaultPrice),
+      currency: DEFAULT_CATEGORY_CURRENCY,
+      quantity: DEFAULT_CATEGORY_QUANTITY,
+      quantitySold: 0,
+      benefits: null,
+      seatType: null,
+      createdAt: now(),
+      updatedAt: now(),
+    };
+  });
+
+  localPackages = [...localPackages, ...created];
+  return localPackages.filter((pkg) => pkg.matchId === matchId);
+}
+
+localMatches.forEach((match) => {
+  ensureLocalStandardPackagesForMatch(match.id);
+});
+
+export async function ensureStandardPackagesForMatch(matchId: number) {
+  const db = getPool();
+  if (!db) {
+    return ensureLocalStandardPackagesForMatch(matchId);
+  }
+
+  const existing = await query<Pick<LocalPackage, "category">>(
+    `SELECT "category" FROM "ticketPackages" WHERE "matchId" = $1`,
+    [matchId]
+  );
+  if (!existing) {
+    return ensureLocalStandardPackagesForMatch(matchId);
+  }
+
+  const existingCategories = new Set(existing.rows.map((row) => row.category));
+  const required = TICKET_CATEGORIES.map((item) => item.name);
+  const missing = required.filter((category) => !existingCategories.has(category));
+  if (missing.length === 0) {
+    return getPackagesByMatchId(matchId);
+  }
+
+  await Promise.all(
+    missing.map((category) => {
+      const defaultPrice = TICKET_CATEGORIES.find((item) => item.name === category)?.price ?? 0;
+      return query(
+        `
+          INSERT INTO "ticketPackages" ("matchId", "category", "price", "currency", "quantity", "quantitySold", "updatedAt")
+          VALUES ($1, $2, $3, $4, $5, 0, now())
+        `,
+        [matchId, category, defaultPrice, DEFAULT_CATEGORY_CURRENCY, DEFAULT_CATEGORY_QUANTITY]
+      );
+    })
+  );
+
+  return getPackagesByMatchId(matchId);
+}
+
+export async function ensureStandardPackagesForAllMatches() {
+  const matches = await getAllMatches();
+  const results = await Promise.all(matches.map((match) => ensureStandardPackagesForMatch(match.id)));
+  return {
+    matchCount: matches.length,
+    initializedCount: results.filter((pkgs) => pkgs.length > 0).length,
+  } as const;
+}
+
+export async function setMatchCategoryPrices(
+  matchId: number,
+  updates: Array<{ category: TicketCategory; price: number }>
+) {
+  await ensureStandardPackagesForMatch(matchId);
+
+  const db = getPool();
+  if (!db) {
+    localPackages = localPackages.map((pkg) => {
+      if (pkg.matchId !== matchId) return pkg;
+      const update = updates.find((item) => item.category === pkg.category);
+      if (!update) return pkg;
+      return { ...pkg, price: String(update.price), updatedAt: now() };
+    });
+    return localPackages.filter((pkg) => pkg.matchId === matchId);
+  }
+
+  await Promise.all(
+    updates.map((item) =>
+      query(
+        `
+          UPDATE "ticketPackages"
+          SET "price" = $3, "updatedAt" = now()
+          WHERE "matchId" = $1 AND "category" = $2
+        `,
+        [matchId, item.category, item.price]
+      )
+    )
+  );
+
+  return getPackagesByMatchId(matchId);
+}
 
 function getPool() {
   if (!process.env.DATABASE_URL) return null;
@@ -238,7 +355,9 @@ export async function createMatch(data: any) {
     [data.matchNumber, data.team1, data.team1Code, data.team2, data.team2Code, data.stadium, data.city, data.country, data.matchDate, data.stage, data.group ?? null, data.availability ?? "available", data.imageUrl ?? null]
   );
 
-  return result?.rows[0] ?? createdLocal();
+  const created = result?.rows[0] ?? createdLocal();
+  await ensureStandardPackagesForMatch(created.id);
+  return created;
 }
 
 export async function updateMatch(id: number, data: any) {
