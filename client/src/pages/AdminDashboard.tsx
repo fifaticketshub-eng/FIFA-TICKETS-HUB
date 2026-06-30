@@ -208,7 +208,7 @@ function MatchesAdmin() {
               <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="group">Group</SelectItem>
-                <SelectItem value="round_of_16">Round of 16</SelectItem>
+                <SelectItem value="round_of_16">Round of 32</SelectItem>
                 <SelectItem value="quarter_final">Quarter Final</SelectItem>
                 <SelectItem value="semi_final">Semi Final</SelectItem>
                 <SelectItem value="final">Final</SelectItem>

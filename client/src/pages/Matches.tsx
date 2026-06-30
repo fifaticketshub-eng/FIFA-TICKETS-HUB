@@ -151,7 +151,7 @@ export const worldCup2026Matches: DisplayMatch[] = [
 
 const stages = [
   { value: 'group', label: 'Group' },
-  { value: 'round_of_16', label: 'Round of 16' },
+  { value: 'round_of_16', label: 'Round of 32' },
   { value: 'quarter_final', label: 'Quarter Final' },
   { value: 'semi_final', label: 'Semi Final' },
   { value: 'final', label: 'Final' },
