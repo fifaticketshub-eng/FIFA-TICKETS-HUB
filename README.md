@@ -58,7 +58,7 @@ fifa-ticket-hub/
 ## 📋 Prerequisites
 
 - Node.js (Latest LTS recommended)
-- PostgreSQL Database
+- PostgreSQL Databases
 - npm or yarn
 
 ## ⚙️ Setup Instructions
